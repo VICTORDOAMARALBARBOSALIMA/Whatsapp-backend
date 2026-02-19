@@ -141,4 +141,4 @@ cron.schedule('* * * * *', async () => {
   }
 });
 
-module.exports = { sendMessage, scheduleMessageLocal };
+module.exports = { sendMessage, scheduleMessageLocal, initSession, clients };

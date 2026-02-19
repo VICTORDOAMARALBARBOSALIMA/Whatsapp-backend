@@ -1,4 +1,6 @@
 // src/server.js
+const sessionRoute = require('./routes/session');
+const qrRoute = require('./routes/qr');
 const express = require('express');
 const bodyParser = require('body-parser');
 const { sendMessage, scheduleMessageLocal } = require('../services/whatsappService');
@@ -7,6 +9,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
+
+app.use('/', sessionRoute);
+
+app.use('/qr', qrRoute);
+
 
 // ---------------------
 // Rota teste / status
