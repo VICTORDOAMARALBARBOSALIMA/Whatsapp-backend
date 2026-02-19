@@ -15,6 +15,7 @@ app.use(cors({
   origin: ['https://formulape2.mocha.app', 'http://localhost:5173'], // URL do app publicado
   credentials: true
 }));
+app.use(cors({ origin: '*' }));
 
 app.use('/qr', require('./src/routes/qr'));
 
