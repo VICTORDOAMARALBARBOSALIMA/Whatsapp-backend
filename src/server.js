@@ -1,23 +1,35 @@
 // src/server.js
-const sessionRoute = require('./routes/session');
-const qrRoute = require('./routes/qr');
 const express = require('express');
 const bodyParser = require('body-parser');
-const { sendMessage, scheduleMessageLocal } = require('../services/whatsappService');
+const cors = require('cors');
+
+const sessionRoute = require('./routes/session');
+const qrRoute = require('./routes/qr');
+const { sendMessage, scheduleMessageLocal, clients } = require('../services/whatsappService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ---------------------
+// CORS - permitir apenas frontend Mocha (produção)
+// ---------------------
+app.use(cors({
+  origin: ['https://formulape2.mocha.app'], // URL do app publicado
+  credentials: true
+}));
+
+// ---------------------
+// Body parser
+// ---------------------
 app.use(bodyParser.json());
 
+// ---------------------
+// Rotas
+// ---------------------
 app.use('/', sessionRoute);
-
 app.use('/qr', qrRoute);
 
-
-// ---------------------
-// Rota teste / status
-// ---------------------
+// Rota teste /status do backend
 app.get('/', (req, res) => {
   res.json({ status: 'WhatsApp backend ativo!' });
 });
@@ -57,6 +69,20 @@ app.post('/schedule', (req, res) => {
   } catch (err) {
     console.error('Erro na rota /schedule:', err);
     res.status(500).json({ error: 'Erro interno ao agendar mensagem' });
+  }
+});
+
+// ---------------------
+// Status da sessão de cada clínica
+// ---------------------
+app.get('/status/:clinic_id', (req, res) => {
+  const { clinic_id } = req.params;
+  const client = clients[clinic_id];
+
+  if (client && client.info && client.info.wid) {
+    return res.json({ status: 'active', message: 'Sessão ativa!' });
+  } else {
+    return res.json({ status: 'inactive', message: 'Sessão não está ativa' });
   }
 });
 
