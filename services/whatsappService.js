@@ -35,7 +35,6 @@ async function initSession(clinic_id) {
   }),
   puppeteer: {
     headless: true,
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH, // <<< Importante
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
