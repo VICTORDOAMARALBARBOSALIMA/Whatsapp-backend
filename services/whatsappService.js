@@ -35,6 +35,7 @@ async function initSession(clinic_id) {
   }),
   puppeteer: {
     headless: true,
+    executablePath: puppeteer.executablePath(), // pega o Chromium que o Puppeteer baixou
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',

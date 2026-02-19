@@ -10,9 +10,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // --- CORS ---
+import cors from "cors";
 app.use(cors({
-  origin: ['https://formulape2.mocha.app', 'https://app.formulape.app.br'],
-  credentials: true
+    origin: ['https://app.formulape.app.br', 'https://formulape2.mocha.app']
 }));
 
 app.use(bodyParser.json());
