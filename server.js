@@ -13,10 +13,9 @@ const PORT = process.env.PORT || 3000;
 // CORS configurado
 // -------------------------
 app.use(cors({
-  origin: ['https://formulape2.mocha.app', 'http://localhost:5173'],
+  origin: ['https://formulape2.mocha.app', 'https://app.formulape.app.br/whatsapp', 'http://localhost:5173'],
   credentials: true
 }));
-app.use(cors({ origin: 'https://formulape2.mocha.app' }));
 // -------------------------
 // Body parser
 // -------------------------
