@@ -3,23 +3,28 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
+const qrcode = require('qrcode-terminal');
 const { logMessage } = require('../utils/logger');
 
+// ---------------------
 // Garantir que a pasta de sessões exista
+// ---------------------
 const SESSIONS_DIR = path.resolve('./sessions');
 if (!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true });
 
+// ---------------------
 // Armazena instâncias de clientes por clinic_id
+// ---------------------
 const clients = {};
 
+// ---------------------
 // Armazena mensagens agendadas
+// ---------------------
 const scheduledMessages = [];
 
-/**
- * Espera até que o client esteja pronto
- * @param {Client} client 
- * @param {string} clinic_id
- */
+// ---------------------
+// Espera até que o client esteja pronto
+// ---------------------
 function waitUntilReady(client, clinic_id) {
   if (client.info && client.info.wid) return Promise.resolve(); // já pronto
   return new Promise(resolve => {
@@ -30,11 +35,9 @@ function waitUntilReady(client, clinic_id) {
   });
 }
 
-/**
- * Inicializa ou retorna um client WhatsApp para uma clínica específica.
- * @param {string} clinic_id
- * @returns {Client}
- */
+// ---------------------
+// Inicializa ou retorna um client WhatsApp para uma clínica específica
+// ---------------------
 async function initSession(clinic_id) {
   if (clients[clinic_id]) return clients[clinic_id];
 
@@ -45,18 +48,23 @@ async function initSession(clinic_id) {
     }),
     puppeteer: {
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--single-process',
+        '--no-zygote'
+      ]
     }
   });
 
-  const qrcode = require('qrcode-terminal');
-
-client.on('qr', qr => {
+  // ---------------------
+  // Eventos do client
+  // ---------------------
+  client.on('qr', qr => {
     console.log(`QR Code gerado para ${clinic_id}. Escaneie no WhatsApp:`);
-
-    // gera QR code legível no terminal
-    qrcode.generate(qr, { small: true });
-});
+    qrcode.generate(qr, { small: true }); // mostra QR no terminal
+  });
 
   client.on('ready', () => console.log(`WhatsApp pronto para ${clinic_id}`));
   client.on('auth_failure', () => console.log(`Falha de autenticação: ${clinic_id}`));
@@ -65,23 +73,25 @@ client.on('qr', qr => {
     delete clients[clinic_id]; // remove client desconectado
   });
 
-  client.initialize();
+  // Inicializa o client
+  await client.initialize();
   clients[clinic_id] = client;
+
   return client;
 }
 
-/**
- * Envia uma mensagem imediata.
- * Aguarda o client estar pronto antes de enviar.
- */
+// ---------------------
+// Envia uma mensagem imediata
+// ---------------------
 async function sendMessage(clinic_id, to, message, appointment_id = null) {
-  const client = await initSession(clinic_id);
-
-  // Espera o client estar pronto
-  await waitUntilReady(client, clinic_id);
-
   try {
-    await client.sendMessage(to, message);
+    const client = await initSession(clinic_id);
+    await waitUntilReady(client, clinic_id);
+
+    // Força formato correto do WhatsApp
+    const chatId = to.endsWith('@c.us') ? to : `${to}@c.us`;
+    await client.sendMessage(chatId, message);
+
     logMessage({
       clinic_id,
       patient_phone: to,
@@ -91,9 +101,12 @@ async function sendMessage(clinic_id, to, message, appointment_id = null) {
       template_name: null,
       appointment_id
     });
+
     return { success: true, external_message_id: `${clinic_id}-${Date.now()}` };
   } catch (err) {
-    console.error(`Erro ao enviar para ${to}:`, err.message);
+    const errorMsg = err && err.message ? err.message : JSON.stringify(err);
+    console.error(`Erro ao enviar para ${to}:`, errorMsg);
+
     logMessage({
       clinic_id,
       patient_phone: to,
@@ -103,13 +116,14 @@ async function sendMessage(clinic_id, to, message, appointment_id = null) {
       template_name: null,
       appointment_id
     });
-    return { success: false, error: err.message };
+
+    return { success: false, error: errorMsg };
   }
 }
 
-/**
- * Agenda uma mensagem para envio futuro.
- */
+// ---------------------
+// Agenda uma mensagem para envio futuro
+// ---------------------
 function scheduleMessageLocal(clinic_id, to, message, send_at, appointment_id = null) {
   scheduledMessages.push({
     clinic_id,
@@ -118,6 +132,7 @@ function scheduleMessageLocal(clinic_id, to, message, send_at, appointment_id = 
     send_at: new Date(send_at),
     appointment_id
   });
+
   logMessage({
     clinic_id,
     patient_phone: to,
@@ -129,7 +144,9 @@ function scheduleMessageLocal(clinic_id, to, message, send_at, appointment_id = 
   });
 }
 
+// ---------------------
 // Cron interno para processar mensagens agendadas a cada minuto
+// ---------------------
 cron.schedule('* * * * *', async () => {
   const now = new Date();
   for (let i = scheduledMessages.length - 1; i >= 0; i--) {
@@ -141,4 +158,12 @@ cron.schedule('* * * * *', async () => {
   }
 });
 
-module.exports = { sendMessage, scheduleMessageLocal, initSession, clients };
+// ---------------------
+// Exporta funções
+// ---------------------
+module.exports = {
+  sendMessage,
+  scheduleMessageLocal,
+  initSession,
+  clients
+};

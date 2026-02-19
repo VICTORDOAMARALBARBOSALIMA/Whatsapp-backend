@@ -14,9 +14,11 @@ const PORT = process.env.PORT || 3000;
 // CORS - permitir apenas frontend Mocha (produção)
 // ---------------------
 app.use(cors({
-  origin: ['https://formulape2.mocha.app'], // URL do app publicado
+  origin: ['https://formulape2.mocha.app', 'http://localhost:5173'], // URL do app publicado
   credentials: true
 }));
+
+app.use('/qr', require('./routes/qr'));
 
 // ---------------------
 // Body parser
@@ -28,6 +30,7 @@ app.use(bodyParser.json());
 // ---------------------
 app.use('/', sessionRoute);
 app.use('/qr', qrRoute);
+
 
 // Rota teste /status do backend
 app.get('/', (req, res) => {

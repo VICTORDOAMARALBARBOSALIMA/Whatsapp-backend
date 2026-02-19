@@ -20,44 +20,41 @@ router.get('/:clinic_id', async (req, res) => {
     // Inicializa client (ou pega existente)
     const client = await initSession(clinic_id);
 
-    // Função para aguardar QR
-    const qrCode = await new Promise((resolve, reject) => {
-      let handled = false;
+    let sentResponse = false;
 
-      // Quando QR for gerado
-      client.once('qr', qr => {
-        if (!handled) {
-          handled = true;
-          resolve(qr);
-        }
-      });
+    // Evento QR
+    const qrListener = (qr) => {
+      if (!sentResponse) {
+        sentResponse = true;
+        res.json({ status: 'qr', qr });
+      }
+    };
 
-      // Se o client ficar pronto antes do QR
-      client.once('ready', () => {
-        if (!handled) {
-          handled = true;
-          resolve(null); // null indica que já está ativo
-        }
-      });
+    // Evento ready
+    const readyListener = () => {
+      if (!sentResponse) {
+        sentResponse = true;
+        res.json({ status: 'active', message: 'Sessão já ativa!' });
+      }
+    };
 
-      // Timeout 30s
-      setTimeout(() => {
-        if (!handled) {
-          handled = true;
-          reject(new Error('Não foi possível gerar o QR code. Tente novamente.'));
-        }
-      }, 30000);
-    });
+    client.once('qr', qrListener);
+    client.once('ready', readyListener);
 
-    if (qrCode) {
-      return res.json({ status: 'qr', qr: qrCode });
-    } else {
-      return res.json({ status: 'active', message: 'Sessão já ativa!' });
-    }
+    // Timeout de 60s caso não gere QR
+    setTimeout(() => {
+      if (!sentResponse) {
+        sentResponse = true;
+        res.status(500).json({
+          status: 'error',
+          message: 'Não foi possível gerar o QR code. Tente novamente.'
+        });
+      }
+    }, 60000);
 
   } catch (err) {
     console.error('Erro ao gerar QR code:', err);
-    res.status(500).json({ status: 'error', message: err.message || 'Erro ao gerar QR code' });
+    res.status(500).json({ status: 'error', message: 'Erro ao gerar QR code' });
   }
 });
 
