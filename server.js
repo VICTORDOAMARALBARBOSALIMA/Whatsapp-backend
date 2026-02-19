@@ -2,11 +2,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-
-const sessionRoute = require('./routes/session');
-const qrRoute = require('./routes/qr');
-const { sendMessage, scheduleMessageLocal, clients } = require('../services/whatsappService');
-
+const sessionRoute = require('./src/routes/session');
+const qrRoute = require('./src/routes/qr');
+const { sendMessage, scheduleMessageLocal } = require('./services/whatsappService');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -18,7 +16,7 @@ app.use(cors({
   credentials: true
 }));
 
-app.use('/qr', require('./routes/qr'));
+app.use('/qr', require('./src/routes/qr'));
 
 // ---------------------
 // Body parser

@@ -9,7 +9,7 @@ const { logMessage } = require('../utils/logger');
 // ---------------------
 // Garantir que a pasta de sessões exista
 // ---------------------
-const SESSIONS_DIR = path.resolve('./sessions');
+const SESSIONS_DIR = path.resolve('./sessions'); // agora ./sessions já é a raiz
 if (!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true });
 
 // ---------------------
@@ -51,6 +51,7 @@ async function initSession(clinic_id) {
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
+        '--disable-gpu',
         '--disable-dev-shm-usage',
         '--single-process',
         '--no-zygote'
