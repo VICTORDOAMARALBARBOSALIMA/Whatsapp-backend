@@ -3,21 +3,11 @@ services:
     name: whatsapp-backend
     env: node
     buildCommand: |
-      apt-get update && apt-get install -y \
-        chromium \
-        chromium-sandbox \
-        fonts-liberation \
-        libappindicator3-1 \
-        libasound2 \
-        libatk-bridge2.0-0 \
-        libnspr4 \
-        libnss3 \
-        lsb-release \
-        xdg-utils \
-        wget
       npm install
       npx @puppeteer/browsers install chrome@stable
     startCommand: node server.js
     envVars:
+      - key: PORT
+        value: 3000
       - key: PUPPETEER_EXECUTABLE_PATH
         value: /opt/render/.cache/puppeteer/chrome/linux-*/chrome-linux*/chrome

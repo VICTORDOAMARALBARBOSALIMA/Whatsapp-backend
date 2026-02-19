@@ -29,25 +29,25 @@ async function initSession(clinic_id) {
   if (clients[clinic_id]) return clients[clinic_id];
 
   const client = new Client({
-    authStrategy: new LocalAuth({
-      clientId: clinic_id,
-      dataPath: SESSIONS_DIR
-    }),
-    puppeteer: {
-      headless: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-gpu',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-software-rasterizer',
-        '--single-process',
-        '--no-zygote'
-      ]
-    }
-  });
+  authStrategy: new LocalAuth({
+    clientId: clinic_id,
+    dataPath: SESSIONS_DIR
+  }),
+  puppeteer: {
+    headless: true,
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH, // <<< Importante
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-gpu',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--disable-software-rasterizer',
+      '--single-process',
+      '--no-zygote'
+    ]
+  }
+});
 
   const qrcode = require('qrcode-terminal');
 
