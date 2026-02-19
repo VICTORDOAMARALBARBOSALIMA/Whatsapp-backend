@@ -1,44 +1,39 @@
-// src/server.js
+// server.js
 const express = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors');
+const cors = require('cors'); // <- IMPORTANTE
+const { sendMessage, scheduleMessageLocal } = require('./services/whatsappService');
 const sessionRoute = require('./src/routes/session');
 const qrRoute = require('./src/routes/qr');
-const { sendMessage, scheduleMessageLocal } = require('./services/whatsappService');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ---------------------
-// CORS - permitir apenas frontend Mocha (produção)
-// ---------------------
+// -------------------------
+// CORS configurado
+// -------------------------
 app.use(cors({
-  origin: ['https://formulape2.mocha.app', 'http://localhost:5173'], // URL do app publicado
+  origin: ['https://formulape2.mocha.app', 'http://localhost:5173'],
   credentials: true
 }));
-app.use(cors({ origin: '*' }));
-
-app.use('/qr', require('./src/routes/qr'));
-
-// ---------------------
+app.use(cors({ origin: 'https://formulape2.mocha.app' }));
+// -------------------------
 // Body parser
-// ---------------------
+// -------------------------
 app.use(bodyParser.json());
 
-// ---------------------
+// -------------------------
 // Rotas
-// ---------------------
+// -------------------------
 app.use('/', sessionRoute);
 app.use('/qr', qrRoute);
 
-
-// Rota teste /status do backend
+// Status simples
 app.get('/', (req, res) => {
   res.json({ status: 'WhatsApp backend ativo!' });
 });
 
-// ---------------------
 // Envio de mensagem imediata
-// ---------------------
 app.post('/send', async (req, res) => {
   const { clinic_id, phone, message, appointment_id } = req.body;
 
@@ -55,9 +50,7 @@ app.post('/send', async (req, res) => {
   }
 });
 
-// ---------------------
 // Agendar mensagem
-// ---------------------
 app.post('/schedule', (req, res) => {
   const { clinic_id, phone, message, send_at, appointment_id } = req.body;
 
@@ -74,23 +67,9 @@ app.post('/schedule', (req, res) => {
   }
 });
 
-// ---------------------
-// Status da sessão de cada clínica
-// ---------------------
-app.get('/status/:clinic_id', (req, res) => {
-  const { clinic_id } = req.params;
-  const client = clients[clinic_id];
-
-  if (client && client.info && client.info.wid) {
-    return res.json({ status: 'active', message: 'Sessão ativa!' });
-  } else {
-    return res.json({ status: 'inactive', message: 'Sessão não está ativa' });
-  }
-});
-
-// ---------------------
-// Inicia o servidor
-// ---------------------
+// -------------------------
+// Start server
+// -------------------------
 app.listen(PORT, () => {
   console.log(`Servidor WhatsApp rodando na porta ${PORT}`);
 });
