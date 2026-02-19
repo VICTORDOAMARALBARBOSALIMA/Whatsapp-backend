@@ -51,8 +51,10 @@ async function initSession(clinic_id) {
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-gpu',
+        '--disable-gpu',  
         '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-software-rasterizer',
         '--single-process',
         '--no-zygote'
       ]
